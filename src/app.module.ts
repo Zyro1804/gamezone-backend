@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { RolesModule } from './roles/roles.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,12 +24,16 @@ import { RolesModule } from './roles/roles.module';
         password: configService.getOrThrow<string>('DB_PASSWORD'),
         database: configService.getOrThrow<string>('DB_DATABASE'),
         autoLoadModels: true,
-        synchronize: false,
+        synchronize: true,
         logging: false,
       }),
     }),
 
     RolesModule,
+
+    UsuariosModule,
+
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

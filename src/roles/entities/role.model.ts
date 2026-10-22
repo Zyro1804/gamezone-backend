@@ -7,7 +7,9 @@ import {
   Default,
   AllowNull,
   Unique,
+  HasMany,
 } from 'sequelize-typescript';
+import { Usuario } from '../../usuarios/entities/usuario.model';
 
 @Table({
   tableName: 'roles',
@@ -25,5 +27,8 @@ export class Role extends Model<Role> {
   @Unique
   @Column(DataType.STRING(50))
   declare nombre: string;
+
+  @HasMany(() => Usuario)
+  declare usuarios: Usuario[];
 
 }
