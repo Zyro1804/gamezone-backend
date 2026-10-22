@@ -7,6 +7,7 @@ import { RolesModule } from './roles/roles.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { AuthModule } from './auth/auth.module';
 import { CategoriasModule } from './categorias/categorias.module';
+import { VideojuegosModule } from './videojuegos/videojuegos.module';
 
 @Module({
   imports: [
@@ -37,6 +38,8 @@ import { CategoriasModule } from './categorias/categorias.module';
     AuthModule,
 
     CategoriasModule,
+
+    VideojuegosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -8,7 +8,9 @@ import {
   Default,
   AllowNull,
   Unique,
+  HasMany,
 } from 'sequelize-typescript';
+import { Videojuego } from '../../videojuegos/entities/videojuego.model';
 
 @Table({
   tableName: 'categorias',
@@ -35,4 +37,7 @@ export class Categoria extends Model<Categoria> {
   @AllowNull(false)
   @Column(DataType.BOOLEAN)
   declare activo: boolean;
+
+  @HasMany(() => Videojuego)
+  declare videojuegos: Videojuego[];
 }
