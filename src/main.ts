@@ -4,9 +4,11 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const configService = app.get(ConfigService);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -29,9 +31,21 @@ async function bootstrap() {
 
     SwaggerModule.setup('api/docs', app, document);
 
-    await app.listen(process.env.PORT ?? 3000);
     app.useStaticAssets(join(process.cwd(), 'uploads'), {
-    prefix: '/uploads/',
-  });
+      prefix: '/uploads/',
+    });
+    const corsOrigins = configService
+      .get<string>('CORS_ORIGINS', '')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+
+    app.enableCors({
+      origin: corsOrigins,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+    });
+    await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();

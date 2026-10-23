@@ -1,4 +1,4 @@
-import { Body, Controller, DefaultValuePipe, Delete, Get, HttpStatus, Param, ParseFilePipeBuilder, ParseIntPipe, ParseUUIDPipe, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Delete, FileValidator, Get, HttpStatus, Param, ParseFilePipe, ParseFilePipeBuilder, ParseIntPipe, ParseUUIDPipe, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { VideojuegosService } from './videojuegos.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -9,6 +9,19 @@ import { videojuegosStorage } from './config/multer.config';
 import { CreateVideojuegoDto } from './dto/create-videojuego.dto';
 import { UpdateVideojuegoDto } from './dto/update-videojuego.dto';
 
+class ImagenMimeValidator extends FileValidator<Record<string, never>> {
+  isValid(file?: Express.Multer.File): boolean {
+    if (!file) return true;
+
+    return ['image/jpeg', 'image/png', 'image/webp'].includes(
+      file.mimetype,
+    );
+  }
+
+  buildErrorMessage(): string {
+    return 'La imagen debe ser JPG, PNG o WebP';
+  }
+}
 @ApiTags('Videojuegos')
 @Controller('videojuegos')
 export class VideojuegosController {
@@ -73,14 +86,10 @@ export class VideojuegosController {
     create(
         @Body() dto: CreateVideojuegoDto,
         @UploadedFile(
-            new ParseFilePipeBuilder()
-                .addFileTypeValidator({
-                    fileType: /image\/(jpeg|png|webp)/,
-                })
-                .build({
-                    fileIsRequired: false,
-                    errorHttpStatusCode: HttpStatus.BAD_REQUEST,
-                }),
+        new ParseFilePipe({
+            validators: [new ImagenMimeValidator({})],
+            fileIsRequired: false,
+        }),
         )
         imagen?: Express.Multer.File,
     ) {
@@ -114,6 +123,31 @@ export class VideojuegosController {
         );
     }
 
+    @Get('/admin')
+    findAllAdmin(
+        @Query(
+            'pagina',
+            new DefaultValuePipe(1),
+            ParseIntPipe,
+        )
+        pagina: number,
+
+        @Query(
+            'limite',
+            new DefaultValuePipe(12),
+            ParseIntPipe,
+        )
+        limite: number,
+
+        @Query('categoriaId') categoriaId?: string,
+    ) {
+        return this.videojuegosService.findAllAdmin(
+            pagina,
+            limite,
+            categoriaId,
+        );
+    }
+
     @Get('mas-jugados')
     findMasJugados() {
         return this.videojuegosService.findMasJugados();
@@ -129,7 +163,6 @@ export class VideojuegosController {
         return this.videojuegosService.findDestacados();
     }
 
-    // Esta ruta debe ir después de las rutas anteriores.
     @Get(':id')
     findOne(
         @Param('id', new ParseUUIDPipe({ version: '4' }))
@@ -156,6 +189,7 @@ export class VideojuegosController {
                 totalJugadores: { type: 'integer' },
                 totalVentas: { type: 'integer' },
                 destacado: { type: 'boolean' },
+                activo: { type: 'boolean' },
                 imagen: { type: 'string', format: 'binary' },
             },
         },
@@ -173,14 +207,11 @@ export class VideojuegosController {
         id: string,
         @Body() dto: UpdateVideojuegoDto,
         @UploadedFile(
-            new ParseFilePipeBuilder()
-                .addFileTypeValidator({
-                    fileType: /image\/(jpeg|png|webp)/,
-                })
-                .build({
-                    fileIsRequired: false,
-                    errorHttpStatusCode: HttpStatus.BAD_REQUEST,
-                }),
+        new ParseFilePipe({
+            validators: [new ImagenMimeValidator({})],
+            fileIsRequired: false,
+            errorHttpStatusCode: HttpStatus.BAD_REQUEST,
+        }),
         )
         imagen?: Express.Multer.File,
     ) {

@@ -96,6 +96,39 @@ export class VideojuegosService {
         };
     }
 
+    
+    async findAllAdmin(pagina = 1, limite = 12, categoriaId?: string) {
+        const page = Math.max(1, pagina);
+        const limit = Math.min(50, Math.max(1, limite));
+
+        const where = {
+            ...(categoriaId ? { categoriaId } : {}),
+        };
+
+        const { rows, count } = await this.videojuegoModel.findAndCountAll({
+            where,
+            include: [
+                {
+                    model: Categoria,
+                    attributes: ['id', 'nombre'],
+                },
+            ],
+            order: [['createdAt', 'DESC']],
+            limit,
+            offset: (page - 1) * limit,
+        });
+
+        return {
+            data: rows,
+            paginacion: {
+                total: count,
+                pagina: page,
+                limite: limit,
+                totalPaginas: Math.ceil(count / limit),
+            },
+        };
+    }
+
     async findMasJugados() {
         return this.videojuegoModel.findAll({
             where: { activo: true },
@@ -177,7 +210,7 @@ export class VideojuegosService {
         try {
             const videojuego = await this.videojuegoModel.findByPk(id);
 
-            if (!videojuego || !videojuego.activo) {
+            if (!videojuego) {
                 throw new NotFoundException('Videojuego no encontrado');
             }
 
@@ -235,20 +268,34 @@ export class VideojuegosService {
         }
     }
 
+
     async remove(id: string) {
         const videojuego = await this.videojuegoModel.findByPk(id);
 
-        if (!videojuego || !videojuego.activo) {
+        if (!videojuego) {
             throw new NotFoundException('Videojuego no encontrado');
         }
 
-        await videojuego.update({ activo: false });
+        const imagenUrl = videojuego.imagenUrl;
+
+        await videojuego.destroy();
+
+        if (imagenUrl?.startsWith('/uploads/videojuegos/')) {
+            const rutaImagen = join(
+                process.cwd(),
+                imagenUrl.replace(/^\/uploads\//, 'uploads/'),
+            );
+
+            await unlink(rutaImagen).catch((error) => {
+                console.error('Error al eliminar la imagen:', error);
+            });
+        }
 
         return {
-            message: 'Videojuego desactivado correctamente',
-            id: videojuego.id,
-            activo: videojuego.activo,
+            message: 'Videojuego eliminado definitivamente',
+            id,
         };
     }
+
 
 }
