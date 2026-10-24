@@ -15,21 +15,24 @@ import { VideojuegosModule } from './videojuegos/videojuegos.module';
       isGlobal: true,
     }),
 
-    SequelizeModule.forRootAsync({
+     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         dialect: 'postgres',
-        host: configService.getOrThrow<string>('DB_HOST'),
-        port: Number(configService.getOrThrow<string>('DB_PORT')),
-        username: configService.getOrThrow<string>('DB_USERNAME'),
-        password: configService.getOrThrow<string>('DB_PASSWORD'),
-        database: configService.getOrThrow<string>('DB_DATABASE'),
+        uri: configService.getOrThrow<string>('DATABASE_URL'),
         autoLoadModels: true,
         synchronize: true,
         logging: false,
+        dialectOptions: {
+          ssl: {
+            require: true,
+            rejectUnauthorized: true,
+          },
+        },
       }),
     }),
+
 
     RolesModule,
 
